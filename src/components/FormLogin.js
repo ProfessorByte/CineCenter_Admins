@@ -106,7 +106,7 @@ export const FormLogin = () => {
             </div>
           </div>
 
-          <div className="form-group row mb-3">
+          <div className="form-group row mb-3 mt-4">
             <div className="col-12">
               <button
                 type="submit"
