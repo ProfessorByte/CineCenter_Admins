@@ -1,0 +1,9 @@
+@media screen and (min-width: 200px) {
+  .backgroundColor {
+    background-image: url(../../public/assets/img/background.jpg);
+    background-size: cover;
+    height: 100vh;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+}
