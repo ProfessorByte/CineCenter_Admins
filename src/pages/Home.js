@@ -94,6 +94,14 @@ export const Home = () => {
     };
   }, []);
 
+  const exchangePositions = (index1, index2, state, setState) => {
+    const newState = [...state];
+    const aux = newState[index1];
+    newState[index1] = newState[index2];
+    newState[index2] = aux;
+    setState(newState);
+  };
+
   const handleValidate = (values) => {
     const errors = {};
     if (!values.linkTMDB) {
@@ -137,7 +145,7 @@ export const Home = () => {
     if (addTo === ADD_TO_BILLBOARD) {
       if (onBillboard.map((item) => item.id).includes(newMovie.id)) {
         alert("La película ya está en la cartelera");
-      } else if (onBillboard.length >= 12) {
+      } else if (onBillboard.length >= 10) {
         alert("La cartelera está llena");
       } else {
         setOnBillboard((prev) => [...prev, { ...newMovie, linkCinema }]);
@@ -147,7 +155,7 @@ export const Home = () => {
     if (addTo === ADD_TO_COMING_SOON) {
       if (comingSoon.map((item) => item.id).includes(newMovie.id)) {
         alert("La película ya está entre los próximos estrenos");
-      } else if (comingSoon.length >= 12) {
+      } else if (comingSoon.length >= 10) {
         alert("La lista de próximos estrenos está llena");
       } else {
         setComingSoon((prev) => [...prev, { ...newMovie, linkCinema }]);
@@ -172,7 +180,7 @@ export const Home = () => {
         >
           <Form>
             <div className="row justify-content-start mb-1">
-              <h1 className="col-auto">Modificar cartelera</h1>
+              <h1 className="col-auto">Modificar la lista de películas</h1>
             </div>
             <div className="form-group row mb-3">
               <div className="col-md-6 mb-1">
@@ -224,28 +232,119 @@ export const Home = () => {
           </Form>
         </Formik>
         <hr />
-        <div className="row">
-          <div className="col-md-6">
-            <h2>Cartelera</h2>
-            <div className="row">
-              {onBillboard.map((movie) => (
-                <div className="col-12 mb-3" key={movie.id}>
-                  {movie.title}
-                </div>
-              ))}
+        <div className="row ms-auto">
+          <div className="col-md-6 col-12 list-group mb-3">
+            <div className="list-group-item list-group-item-primary">
+              <h2>Cartelera</h2>
             </div>
+
+            {onBillboard.map((movie, index) => (
+              <label
+                className="col-12 list-group-item list-group-item-primary"
+                key={movie.id}
+              >
+                <div className="row ms-auto d-flex align-items-center">
+                  <div className="col-md-8 mb-2">
+                    <input
+                      className="form-check-input me-1"
+                      type="checkbox"
+                      value={movie.id}
+                    />
+                    {movie.title}
+                  </div>
+                  <div className="btn-group col-md-4 p-1" role="group">
+                    <button
+                      type="button"
+                      className="btn btn-success"
+                      disabled={index === 0}
+                      onClick={() =>
+                        exchangePositions(
+                          index,
+                          index - 1,
+                          onBillboard,
+                          setOnBillboard
+                        )
+                      }
+                    >
+                      Subir
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      disabled={index === onBillboard.length - 1}
+                      onClick={() =>
+                        exchangePositions(
+                          index,
+                          index + 1,
+                          onBillboard,
+                          setOnBillboard
+                        )
+                      }
+                    >
+                      Bajar
+                    </button>
+                  </div>
+                </div>
+              </label>
+            ))}
           </div>
-          <div className="col-md-6">
-            <h2>Próximos Estrenos</h2>
-            <div className="row">
-              {comingSoon.map((movie) => (
-                <div className="col-12 mb-3" key={movie.id}>
-                  {movie.title}
-                </div>
-              ))}
+          <div className="col-md-6 col-12 list-group mb-3">
+            <div className="list-group-item list-group-item-primary">
+              <h2>Próximos Estrenos</h2>
             </div>
+
+            {comingSoon.map((movie, index) => (
+              <label
+                className="col-12 list-group-item list-group-item-primary"
+                key={movie.id}
+              >
+                <div className="row ms-auto d-flex align-items-center">
+                  <div className="col-md-8 mb-2">
+                    <input
+                      className="form-check-input me-1"
+                      type="checkbox"
+                      value={movie.id}
+                    />
+                    {movie.title}
+                  </div>
+                  <div className="btn-group col-md-4 p-1" role="group">
+                    <button
+                      type="button"
+                      className="btn btn-success"
+                      disabled={index === 0}
+                      onClick={() =>
+                        exchangePositions(
+                          index,
+                          index - 1,
+                          comingSoon,
+                          setComingSoon
+                        )
+                      }
+                    >
+                      Subir
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      disabled={index === comingSoon.length - 1}
+                      onClick={() =>
+                        exchangePositions(
+                          index,
+                          index + 1,
+                          comingSoon,
+                          setComingSoon
+                        )
+                      }
+                    >
+                      Bajar
+                    </button>
+                  </div>
+                </div>
+              </label>
+            ))}
           </div>
         </div>
+        <div className="row"></div>
       </div>
     </div>
   );
