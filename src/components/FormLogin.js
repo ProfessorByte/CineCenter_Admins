@@ -1,16 +1,30 @@
 import { Formik, Form, Field, ErrorMessage } from "formik";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import styles from "./FormLogin.module.css";
 
 export const FormLogin = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const [currentError, setCurrentError] = useState("");
+
   const initialFormValues = {
-    username: "",
+    email: "",
     password: "",
   };
 
   const handleValidate = (values) => {
     const errors = {};
-    if (!values.username) {
-      errors.username = "Se requiere un nombre de usuario";
+    if (!values.email) {
+      errors.email = "Se requiere un correo electrónico";
+    } else if (
+      !/^[-\w.%+]{1,64}@(?:[A-Z0-9-]{1,63}\.){1,125}[A-Z]{2,63}$/i.test(
+        values.email
+      )
+    ) {
+      errors.email = "El correo electrónico no es válido";
     }
 
     if (!values.password) {
@@ -19,8 +33,20 @@ export const FormLogin = () => {
     return errors;
   };
 
-  const handleSubmit = (values) => {
-    console.log(values);
+  const handleSubmit = async (values, actions) => {
+    try {
+      await login(values.email, values.password);
+      navigate("/");
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        setCurrentError("El correo electrónico no existe");
+      } else if (error.code === "auth/wrong-password") {
+        setCurrentError("La contraseña no es correcta");
+      } else {
+        setCurrentError("Error desconocido");
+      }
+    }
+    actions.resetForm(initialFormValues);
   };
 
   return (
@@ -29,33 +55,36 @@ export const FormLogin = () => {
         initialValues={initialFormValues}
         validate={handleValidate}
         onSubmit={handleSubmit}
+        enableReinitialize={true}
       >
         <Form>
           <div className="row justify-content-center mb-1">
             <h1 className="col-auto">Cine Center</h1>
           </div>
-          {/*<div className="row justify-content-center">
-            <p className="col-auto text-center fw-bold">
-              Ingresa tus datos de administrador
-            </p>
+          <div className="row justify-content-center">
+            {currentError !== "" && (
+              <p className="col-auto text-center text-danger fw-bold">
+                {currentError}
+              </p>
+            )}
             <hr />
-          </div>*/}
+          </div>
 
           <div className="form-group row mb-3">
-            <label htmlFor="username" className="col-12 col-form-label">
-              Nombre de usuario:
+            <label htmlFor="email" className="col-12 col-form-label">
+              Correo electrónico:
             </label>
             <div className="col-12">
               <Field
-                id="username"
+                id="email"
                 className="form-control"
-                name="username"
-                type="text"
-                placeholder="Ingresa tu nombre de usuario"
+                name="email"
+                type="email"
+                placeholder="Ingresa tu correo electrónico"
               />
             </div>
             <div className="col-md-10 text-danger">
-              <ErrorMessage name="username" />
+              <ErrorMessage name="email" />
             </div>
           </div>
 
@@ -79,7 +108,11 @@ export const FormLogin = () => {
 
           <div className="form-group row mb-3">
             <div className="col-12">
-              <button type="submit" className="btn btn-danger btn-lg w-100">
+              <button
+                type="submit"
+                className="btn btn-danger btn-lg w-100"
+                onClick={() => setCurrentError("")}
+              >
                 Ingresar
               </button>
             </div>
