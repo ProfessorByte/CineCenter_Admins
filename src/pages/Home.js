@@ -219,20 +219,6 @@ export const Home = () => {
               <div className="form-group row mb-3">
                 <div className="col-md-6 mb-1">
                   <Field
-                    id="linkTMDB"
-                    className="form-control"
-                    name="linkTMDB"
-                    type="url"
-                    placeholder="Link de la película en la página de TMDB"
-                  />
-                  <div
-                    className={`text-light bg-danger ${styles.errorMessage}`}
-                  >
-                    <ErrorMessage name="linkTMDB" />
-                  </div>
-                </div>
-                <div className="col-md-6 mb-1">
-                  <Field
                     id="linkCinema"
                     className="form-control"
                     name="linkCinema"
@@ -243,6 +229,20 @@ export const Home = () => {
                     className={`text-light bg-danger ${styles.errorMessage}`}
                   >
                     <ErrorMessage name="linkCinema" />
+                  </div>
+                </div>
+                <div className="col-md-6 mb-1">
+                  <Field
+                    id="linkTMDB"
+                    className="form-control"
+                    name="linkTMDB"
+                    type="url"
+                    placeholder="Link de la película en la página de TMDB"
+                  />
+                  <div
+                    className={`text-light bg-danger ${styles.errorMessage}`}
+                  >
+                    <ErrorMessage name="linkTMDB" />
                   </div>
                 </div>
               </div>
