@@ -7,18 +7,21 @@ import api, { key } from "../services/api";
 import { db } from "../services/database";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import styles from "./Home.module.css";
+import { ModalConfirmation } from "../components/ModalConfirmation";
 
 export const Home = () => {
   const [onBillboard, setOnBillboard] = useState([]);
   const [comingSoon, setComingSoon] = useState([]);
   const [loadingMovies, setLoadingMovies] = useState(true);
   const [addTo, setAddTo] = useState("");
-  const [someMovieDeleted, setSomeMovieDeleted] = useState(false);
+  const [someMovieChanged, setSomeMovieChanged] = useState(false);
   const { user, logout, loading: loadingUser } = useAuth();
   const navigate = useNavigate();
 
   const ADD_TO_BILLBOARD = "onBillboard";
   const ADD_TO_COMING_SOON = "comingSoon";
+
+  const MODAL_CONFIRMATION_ID = "modalConfirmationId";
 
   const initialFormValues = {
     linkTMDB: "",
@@ -108,6 +111,7 @@ export const Home = () => {
     newState[index1] = newState[index2];
     newState[index2] = aux;
     setState(newState);
+    setSomeMovieChanged(true);
   };
 
   const reloadPage = () => {
@@ -185,7 +189,7 @@ export const Home = () => {
     setComingSoon((prev) =>
       prev.filter((item) => !values.comingSoonList.includes(item.id.toString()))
     );
-    setSomeMovieDeleted(true);
+    setSomeMovieChanged(true);
   };
 
   if (loadingUser || loadingMovies) {
@@ -193,216 +197,232 @@ export const Home = () => {
   }
 
   return (
-    <div className={styles.backgroundColor}>
-      <Header user={user} logout={logout} />
-      <div className="container">
-        <Formik
-          initialValues={initialFormValues}
-          validate={handleValidate}
-          onSubmit={handleSubmit}
-          enableReinitialize={true}
-        >
-          <Form>
-            <div className="row justify-content-start mb-1">
-              <h1 className="col-auto">Modificar la lista de películas</h1>
-            </div>
-            <div className="form-group row mb-3">
-              <div className="col-md-6 mb-1">
-                <Field
-                  id="linkTMDB"
-                  className="form-control"
-                  name="linkTMDB"
-                  type="url"
-                  placeholder="Link de la película en la página de TMDB"
-                />
-                <div className={`text-light bg-danger ${styles.errorMessage}`}>
-                  <ErrorMessage name="linkTMDB" />
-                </div>
+    <>
+      <ModalConfirmation
+        idModalConfirm={MODAL_CONFIRMATION_ID}
+        onBillboard={onBillboard}
+        comingSoon={comingSoon}
+      />
+      <div className={styles.backgroundColor}>
+        <Header user={user} logout={logout} />
+        <div className="container">
+          <Formik
+            initialValues={initialFormValues}
+            validate={handleValidate}
+            onSubmit={handleSubmit}
+            enableReinitialize={true}
+          >
+            <Form>
+              <div className="row justify-content-start mb-1">
+                <h1 className="col-auto">Modificar la lista de películas</h1>
               </div>
-              <div className="col-md-6 mb-1">
-                <Field
-                  id="linkCinema"
-                  className="form-control"
-                  name="linkCinema"
-                  type="url"
-                  placeholder="Link de la película en la página oficial de Cine Center"
-                />
-                <div className={`text-light bg-danger ${styles.errorMessage}`}>
-                  <ErrorMessage name="linkCinema" />
-                </div>
-              </div>
-            </div>
-            <div className="form-group row mb-3 justify-content-end">
-              <div className="col-md-auto col-12">
-                <button
-                  type="submit"
-                  className="btn btn btn-success mb-1 col-12"
-                  onClick={() => setAddTo(ADD_TO_BILLBOARD)}
-                >
-                  Agregar a Cartelera
-                </button>
-              </div>
-
-              <div className="col-md-auto col-12">
-                <button
-                  type="submit"
-                  className="btn btn btn-success mb-1 col-12"
-                  onClick={() => setAddTo(ADD_TO_COMING_SOON)}
-                >
-                  Agregar a Próximos Estrenos
-                </button>
-              </div>
-            </div>
-          </Form>
-        </Formik>
-        <hr />
-        <Formik
-          initialValues={initialValuesMoviesLists}
-          onSubmit={handleDeleteMoviesLists}
-          enableReinitialize={true}
-        >
-          <Form>
-            <div className="row ms-auto">
-              <div className="col-md-6 col-12 list-group mb-3">
-                <div className="list-group-item list-group-item-primary">
-                  <h2>Cartelera</h2>
-                </div>
-
-                {onBillboard.map((movie, index) => (
-                  <label
-                    className="col-12 list-group-item list-group-item-primary"
-                    key={`onBillboard${movie.id}`}
+              <div className="form-group row mb-3">
+                <div className="col-md-6 mb-1">
+                  <Field
+                    id="linkTMDB"
+                    className="form-control"
+                    name="linkTMDB"
+                    type="url"
+                    placeholder="Link de la película en la página de TMDB"
+                  />
+                  <div
+                    className={`text-light bg-danger ${styles.errorMessage}`}
                   >
-                    <div className="row ms-auto d-flex align-items-center">
-                      <div className="col-md-8 mb-2">
-                        <Field
-                          className="form-check-input me-1"
-                          type="checkbox"
-                          name="onBillboardList"
-                          value={movie.id.toString()}
-                        />
-                        {movie.title}
-                      </div>
-                      <div className="btn-group col-lg-4 p-1" role="group">
-                        <button
-                          type="button"
-                          className="btn btn-success"
-                          disabled={index === 0}
-                          onClick={() =>
-                            exchangePositions(
-                              index,
-                              index - 1,
-                              onBillboard,
-                              setOnBillboard
-                            )
-                          }
-                        >
-                          Subir
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          disabled={index === onBillboard.length - 1}
-                          onClick={() =>
-                            exchangePositions(
-                              index,
-                              index + 1,
-                              onBillboard,
-                              setOnBillboard
-                            )
-                          }
-                        >
-                          Bajar
-                        </button>
-                      </div>
-                    </div>
-                  </label>
-                ))}
+                    <ErrorMessage name="linkTMDB" />
+                  </div>
+                </div>
+                <div className="col-md-6 mb-1">
+                  <Field
+                    id="linkCinema"
+                    className="form-control"
+                    name="linkCinema"
+                    type="url"
+                    placeholder="Link de la película en la página oficial de Cine Center"
+                  />
+                  <div
+                    className={`text-light bg-danger ${styles.errorMessage}`}
+                  >
+                    <ErrorMessage name="linkCinema" />
+                  </div>
+                </div>
               </div>
-              <div className="col-md-6 col-12 list-group mb-3">
-                <div className="list-group-item list-group-item-primary">
-                  <h2>Próximos Estrenos</h2>
+              <div className="form-group row mb-3 justify-content-end">
+                <div className="col-md-auto col-12">
+                  <button
+                    type="submit"
+                    className="btn btn btn-success mb-1 col-12"
+                    onClick={() => setAddTo(ADD_TO_BILLBOARD)}
+                  >
+                    Agregar a Cartelera
+                  </button>
                 </div>
 
-                {comingSoon.map((movie, index) => (
-                  <label
-                    className="col-12 list-group-item list-group-item-primary"
-                    key={`comingSoon${movie.id}`}
+                <div className="col-md-auto col-12">
+                  <button
+                    type="submit"
+                    className="btn btn btn-success mb-1 col-12"
+                    onClick={() => setAddTo(ADD_TO_COMING_SOON)}
                   >
-                    <div className="row ms-auto d-flex align-items-center">
-                      <div className="col-md-8 mb-2">
-                        <Field
-                          className="form-check-input me-1"
-                          type="checkbox"
-                          name="comingSoonList"
-                          value={movie.id.toString()}
-                        />
-                        {movie.title}
-                      </div>
-                      <div className="btn-group col-lg-4 p-1" role="group">
-                        <button
-                          type="button"
-                          className="btn btn-success"
-                          disabled={index === 0}
-                          onClick={() =>
-                            exchangePositions(
-                              index,
-                              index - 1,
-                              comingSoon,
-                              setComingSoon
-                            )
-                          }
-                        >
-                          Subir
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          disabled={index === comingSoon.length - 1}
-                          onClick={() =>
-                            exchangePositions(
-                              index,
-                              index + 1,
-                              comingSoon,
-                              setComingSoon
-                            )
-                          }
-                        >
-                          Bajar
-                        </button>
-                      </div>
-                    </div>
-                  </label>
-                ))}
+                    Agregar a Próximos Estrenos
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="row justify-content-end ms-auto">
-              {someMovieDeleted && (
+            </Form>
+          </Formik>
+          <hr />
+          <Formik
+            initialValues={initialValuesMoviesLists}
+            onSubmit={handleDeleteMoviesLists}
+            enableReinitialize={true}
+          >
+            <Form>
+              <div className="row ms-auto">
+                <div className="col-md-6 col-12 list-group mb-3">
+                  <div className="list-group-item list-group-item-primary">
+                    <h2>Cartelera</h2>
+                  </div>
+
+                  {onBillboard.map((movie, index) => (
+                    <label
+                      className="col-12 list-group-item list-group-item-primary"
+                      key={`onBillboard${movie.id}`}
+                    >
+                      <div className="row ms-auto d-flex align-items-center">
+                        <div className="col-md-8 mb-2">
+                          <Field
+                            className="form-check-input me-1"
+                            type="checkbox"
+                            name="onBillboardList"
+                            value={movie.id.toString()}
+                          />
+                          {movie.title}
+                        </div>
+                        <div className="btn-group col-lg-4 p-1" role="group">
+                          <button
+                            type="button"
+                            className="btn btn-success"
+                            disabled={index === 0}
+                            onClick={() =>
+                              exchangePositions(
+                                index,
+                                index - 1,
+                                onBillboard,
+                                setOnBillboard
+                              )
+                            }
+                          >
+                            Subir
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            disabled={index === onBillboard.length - 1}
+                            onClick={() =>
+                              exchangePositions(
+                                index,
+                                index + 1,
+                                onBillboard,
+                                setOnBillboard
+                              )
+                            }
+                          >
+                            Bajar
+                          </button>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <div className="col-md-6 col-12 list-group mb-3">
+                  <div className="list-group-item list-group-item-primary">
+                    <h2>Próximos Estrenos</h2>
+                  </div>
+
+                  {comingSoon.map((movie, index) => (
+                    <label
+                      className="col-12 list-group-item list-group-item-primary"
+                      key={`comingSoon${movie.id}`}
+                    >
+                      <div className="row ms-auto d-flex align-items-center">
+                        <div className="col-md-8 mb-2">
+                          <Field
+                            className="form-check-input me-1"
+                            type="checkbox"
+                            name="comingSoonList"
+                            value={movie.id.toString()}
+                          />
+                          {movie.title}
+                        </div>
+                        <div className="btn-group col-lg-4 p-1" role="group">
+                          <button
+                            type="button"
+                            className="btn btn-success"
+                            disabled={index === 0}
+                            onClick={() =>
+                              exchangePositions(
+                                index,
+                                index - 1,
+                                comingSoon,
+                                setComingSoon
+                              )
+                            }
+                          >
+                            Subir
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            disabled={index === comingSoon.length - 1}
+                            onClick={() =>
+                              exchangePositions(
+                                index,
+                                index + 1,
+                                comingSoon,
+                                setComingSoon
+                              )
+                            }
+                          >
+                            Bajar
+                          </button>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="row justify-content-end ms-auto">
+                {someMovieChanged && (
+                  <div className="col-md-auto col-12 mb-3">
+                    <button
+                      type="button"
+                      className="btn btn-warning col-12"
+                      onClick={reloadPage}
+                    >
+                      Deshacer todos los cambios
+                    </button>
+                  </div>
+                )}
+                <div className="col-md-auto col-12 mb-3">
+                  <button type="submit" className="btn btn-danger col-12">
+                    Borrar películas seleccionadas
+                  </button>
+                </div>
                 <div className="col-md-auto col-12 mb-3">
                   <button
                     type="button"
-                    className="btn btn-warning col-12"
-                    onClick={reloadPage}
+                    className="btn btn-success col-12"
+                    data-bs-toggle="modal"
+                    data-bs-target={`#${MODAL_CONFIRMATION_ID}`}
                   >
-                    Deshacer las eliminaciones
+                    Enviar todas las películas al servidor
                   </button>
                 </div>
-              )}
-              <div className="col-md-auto col-12 mb-3">
-                <button type="submit" className="btn btn-danger col-12">
-                  Borrar películas seleccionadas
-                </button>
               </div>
-              <div className="col-md-auto col-12 mb-3">
-                <button type="button" className="btn btn-success col-12">
-                  Enviar todas las películas al servidor
-                </button>
-              </div>
-            </div>
-          </Form>
-        </Formik>
-        <div className="row"></div>
+            </Form>
+          </Formik>
+          <div className="row"></div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
